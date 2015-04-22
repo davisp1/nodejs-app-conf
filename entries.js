@@ -5,6 +5,8 @@
 var Bluebird = require('bluebird');
 
 var fs$readFile = require('fs-promise').readFile;
+var fs$writeFile = require('fs-promise').writeFile;
+
 var j = require('path').join;
 var resolvePath = require('path').resolve;
 
@@ -47,6 +49,12 @@ module.exports = [
         readFile
       );
     },
+    write: function(data, opts){
+      var extension = opts.extension || "json";
+      var filePath = j(__dirname, '..', '..', 'config.' + extension)
+
+      return fs$writeFile(filePath, data);
+    }
   },
 
   // Configuration for the whole system.
@@ -59,6 +67,13 @@ module.exports = [
         glob(j('/etc', name, 'config.*')),
         readFile
       );
+    },
+    write: function(data, opts){
+      var extension = opts.extension || "json";
+      var name = opts.name;
+      var filePath = j('/etc', name, 'config.' + extension);
+
+      return fs$writeFile(filePath, data);
     }
   },
 
@@ -77,6 +92,13 @@ module.exports = [
         glob(j(configDir, name, 'config.*')),
         readFile
       );
+    },
+    write: function(data, opts){
+      var configDir = xdgBasedir.config;
+      var extension = opts.extension || "json";
+      var filePath = j(configDir, opts.name, 'config.' + extension)
+
+      return fs$writeFile(filePath, data);
     }
   },
 
@@ -103,6 +125,15 @@ module.exports = [
           silent: true,
         }).catch(ignoreAccessErrors);
       }).then(flatten).map(readFile);
-    }
+    },
+    write: function (data, opts) {
+      var dir = opts.dir || process.cwd();
+      var name = opts.name;
+      var extension = opts.extension || "json";
+      var filePath = j(dir, '.' + name + '.' + extension)
+
+      return fs$writeFile(filePath, data);
+   }
   },
+
 ];
