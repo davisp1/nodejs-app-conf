@@ -18,6 +18,7 @@ var merge = require('lodash.merge');
 var entries = require('./entries');
 var UnknownFormatError = require('./unknown-format-error');
 var unserialize = require('./serializers').unserialize;
+var serialize = require('./serializers').serialize;
 
 //====================================================================
 
@@ -84,5 +85,48 @@ function load(name, opts) {
 }
 
 //====================================================================
+// opts.merge : boolean
+// opts.extension : 'json/ini/yaml'
+// opts.type : 'global/sytem/local'
 
+function save(name, data, opts) {
+  opts || (opts = {});
+
+  var extension = opts.extension || "json";
+  var type = opts.type || "global";
+
+  var entry = entries.filter(function(d){
+    return (d.name === type);
+  })[0];
+
+  var unknownFormatHandler = opts.ignoreUnknownFormats ? noop : rethrow;
+
+  if(entry){
+    entry.read({name: name})
+         .then(flatten)
+         .then(function(files){
+            var file = files[0];
+            if(file){
+              return Bluebird.try(unserialize, file).then(function (value) {
+                    return fixPaths(value, dirname(file.path));
+                  });
+            }
+            else{
+              return {};
+            }
+         })
+         .then(function(value){
+           return (opts.merge === false) ? data : merge(value, data);
+         })
+         .then(function(value){
+           return serialize(value, extension);
+         })
+         .then(function(serialised){
+           entry.write(serialised, {name: name, extension: extension});
+         })
+  }
+}
+
+//====================================================================
 exports.load = load;
+exports.save = save;
