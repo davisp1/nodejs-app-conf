@@ -102,28 +102,28 @@ function save(name, data, opts) {
   var unknownFormatHandler = opts.ignoreUnknownFormats ? noop : rethrow;
 
   if(entry){
-    entry.read({name: name})
-         .then(flatten)
-         .then(function(files){
-            var file = files[0];
-            if(file){
-              return Bluebird.try(unserialize, file).then(function (value) {
-                    return fixPaths(value, dirname(file.path));
-                  });
-            }
-            else{
-              return {};
-            }
-         })
-         .then(function(value){
-           return (opts.merge === false) ? data : merge(value, data);
-         })
-         .then(function(value){
-           return serialize(value, extension);
-         })
-         .then(function(serialised){
-           entry.write(serialised, {name: name, extension: extension});
-         })
+    return entry.read({name: name})
+                .then(flatten)
+               .then(function(files){
+                  var file = files[0];
+                  if(file){
+                    return Bluebird.try(unserialize, file).then(function (value) {
+                          return fixPaths(value, dirname(file.path));
+                        });
+                  }
+                  else{
+                    return {};
+                  }
+               })
+               .then(function(value){
+                 return (opts.merge === false) ? data : merge(value, data);
+               })
+               .then(function(value){
+                 return serialize(value, extension);
+               })
+               .then(function(serialised){
+                 return entry.write(serialised, {name: name, extension: extension});
+               })
   }
 }
 
